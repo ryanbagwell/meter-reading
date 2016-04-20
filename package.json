@@ -1,0 +1,16 @@
+{
+  "name": "utilitymonitoring",
+  "version": "0.1.0",
+  "description": "Scripts to log and monitor my house's electric consumption",
+  "main": "check.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "firebase": "^2.4.2",
+    "promised-exec": "^1.0.1",
+    "q": "^1.4.1"
+  }
+}
