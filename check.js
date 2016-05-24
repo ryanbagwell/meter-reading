@@ -1,4 +1,6 @@
 'use strict';
+require('babel/register');
+
 const childProcess = require('child_process'),
     Firebase = require('firebase'),
     Q = require('q');
