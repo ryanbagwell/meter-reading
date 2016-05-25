@@ -4,20 +4,16 @@
   "description": "Scripts to log and monitor my house's electric consumption",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "postinstall": "go get github.com/bemasher/rtlamr"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "babel": "^6.5.2",
     "babel-cli": "^6.9.0",
     "babel-plugin-transform-es2015-destructuring": "^6.9.0",
     "firebase": "^2.4.2",
     "node-es6": "^0.3.1",
     "promised-exec": "^1.0.1",
     "q": "^1.4.1"
-  },
-  "scripts": {
-    "postinstall": "go get github.com/bemasher/rtlamr"
   }
 }
