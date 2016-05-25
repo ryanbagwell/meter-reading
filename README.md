@@ -10,4 +10,14 @@
 
 ###To run the monitoring and logging facility:
 
-    ./node_modules/.bin/babel-node --plugins babel-plugin-transform-es2015-destructuring index.js
+    ./node_modules/.bin/babel-node \
+    --plugins babel-plugin-transform-es2015-destructuring \
+    index.js
+
+###To run the monitoring and logging facility as a daemon:
+
+    daemon -n meter-reading \
+    -D [path to app root] \
+    -X "./node_modules/.bin/babel-node \
+    --plugins babel-plugin-transform-es2015-destructuring \
+    index.js"
