@@ -1,3 +1,4 @@
+#!/usr/bin/env babel-node --plugins transform-es2015-destructuring
 'use strict';
 
 const childProcess = require('child_process'),
@@ -77,10 +78,7 @@ let readDevices = function() {
     .then(save)
     .then(read.bind(null, devices[1]))
     .then(save)
-    .done(function() {
-      readDevices();
-    });
-
+    .done(readDevices);
 };
 
 readDevices();
