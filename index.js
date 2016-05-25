@@ -2,8 +2,8 @@
 'use strict';
 
 const childProcess = require('child_process'),
-    Firebase = require('firebase'),
-    Q = require('q');
+  Firebase = require('firebase'),
+  Q = require('q');
 
 const devices = [
   {
@@ -28,7 +28,7 @@ let read = function(device) {
 
   let {msgType, deviceId, category} = device;
 
-  let cmd = `rtlamr -filterid=${deviceId} -msgtype=${msgType} -single=true -quiet -format=json`;
+  let cmd = `rtlamr -filterid=${deviceId} -msgtype=${msgType} -single=true -quiet -format=json --server=192.168.10.172:1234`;
 
   childProcess.exec(cmd, function(err, stdout, stderr) {
 
