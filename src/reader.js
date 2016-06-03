@@ -1,9 +1,7 @@
-#!/usr/bin/env babel-node --plugins transform-es2015-destructuring
-'use strict';
-
-const childProcess = require('child_process'),
-  Firebase = require('firebase'),
-  Q = require('q');
+import childProcess from 'child_process';
+import firebase from 'firebase';
+import Q from 'q';
+import config from 'conf/config';
 
 const devices = [
   {
@@ -18,9 +16,11 @@ const devices = [
   },
 ];
 
+firebase.initializeApp(config);
 
-let conn = new Firebase('https://glaring-fire-6854.firebaseio.com');
+let db = firebase.database();
 
+var reading = db.ref("reading");
 
 let read = function(device) {
 
@@ -57,7 +57,7 @@ let save = function(data) {
 
   data = Object.assign({timeStamp: data.Time, category: data.category}, data.Message);
 
-  conn.push(data, (err) => {
+  reading.set(data, (err) => {
     let dataStr = JSON.stringify(data);
 
     if (err) {
@@ -81,4 +81,4 @@ let readDevices = function() {
     .done(readDevices);
 };
 
-readDevices();
+export default readDevices;
