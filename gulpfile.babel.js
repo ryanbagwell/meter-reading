@@ -9,8 +9,6 @@ gulp.task('watchServer', () => {
 
   let conf = webpackConfig(true);
 
-  console.log(conf);
-
   webpack(conf).watch(100, (err, stats) => {
 
     showStats(err, stats);

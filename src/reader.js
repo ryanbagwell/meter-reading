@@ -2,6 +2,7 @@ import childProcess from 'child_process';
 import firebase from 'firebase';
 import Q from 'q';
 import config from 'conf/config';
+import moment from 'moment';
 
 const devices = [
   {
@@ -20,7 +21,9 @@ firebase.initializeApp(config);
 
 let db = firebase.database();
 
-var reading = db.ref("reading");
+let meters = db.ref('meters');
+
+meters.set(devices);
 
 let read = function(device) {
 
@@ -55,9 +58,15 @@ let save = function(data) {
 
   let deferred = Q.defer();
 
-  data = Object.assign({timeStamp: data.Time, category: data.category}, data.Message);
+  data = Object.assign({
+    timeStamp: moment(data.Time).format('X'),
+    timeString: data.Time,
+    category: data.category,
+  }, data.Message);
 
-  reading.set(data, (err) => {
+  let readings = db.ref('readings');
+
+  readings.push(data, (err) => {
     let dataStr = JSON.stringify(data);
 
     if (err) {

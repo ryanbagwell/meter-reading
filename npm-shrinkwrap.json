@@ -454,6 +454,18 @@
       "from": "babylon@>=6.7.0 <7.0.0",
       "resolved": "https://registry.npmjs.org/babylon/-/babylon-6.8.0.tgz"
     },
+    "backbonefire": {
+      "version": "0.0.0",
+      "from": "backbonefire@latest",
+      "resolved": "https://registry.npmjs.org/backbonefire/-/backbonefire-0.0.0.tgz",
+      "dependencies": {
+        "firebase": {
+          "version": "2.0.6",
+          "from": "firebase@>=2.0.0 <2.1.0",
+          "resolved": "https://registry.npmjs.org/firebase/-/firebase-2.0.6.tgz"
+        }
+      }
+    },
     "balanced-match": {
       "version": "0.4.1",
       "from": "balanced-match@>=0.4.1 <0.5.0",
@@ -2531,6 +2543,11 @@
           "resolved": "http://npmregistry.hzdg.com/minimist/-/minimist-0.0.8.tgz"
         }
       }
+    },
+    "moment": {
+      "version": "2.13.0",
+      "from": "moment@latest",
+      "resolved": "https://registry.npmjs.org/moment/-/moment-2.13.0.tgz"
     },
     "ms": {
       "version": "0.7.1",

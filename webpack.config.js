@@ -31,30 +31,8 @@ const webpackConf = (isServer = false) => {
 
   let serverConfig = {
     ...commonConfig,
-    externals: function() {
-
-      let modsToKeep = [
-        // 'firebase',
-        // 'faye-websocket',
-        // 'buffer',
-        // 'request',
-        // 'util',
-        // 'ms',
-        // 'xtend',
-        // 'websocket-driver',
-        // 'websocket-extensions',
-        // 'events',
-        //'Q',
-      ];
-
-      let mods = fs.readdirSync(path.resolve('node_modules'))
-        .map(dir => {
-          if (modsToKeep.indexOf(dir) > -1) return;
-          return dir;
-        });
-
-      return mods;
-    }(),
+    externals: fs.readdirSync(path.resolve('node_modules'))
+      .map(dir => dir),
     entry: {
       reader: './src/reader.js',
     },
