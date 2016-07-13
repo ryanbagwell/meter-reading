@@ -35,4 +35,29 @@ gulp.task('watchClient', () => {
 
 });
 
+gulp.task('buildServer', () => {
+
+  let conf = webpackConfig(true);
+
+  webpack(conf, (err, stats) => {
+
+    showStats(err, stats);
+
+  });
+
+});
+
+gulp.task('buildClient', () => {
+
+  let conf = webpackConfig();
+
+  webpack(conf, (err, stats) => {
+
+    showStats(err, stats);
+
+  });
+
+});
+
 gulp.task('watch', ['watchClient', 'watchServer']);
+gulp.task('build', ['buildClient', 'buildServer']);

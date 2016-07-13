@@ -3,6 +3,7 @@ import firebase from 'firebase';
 import Q from 'q';
 import config from 'conf/config';
 import moment from 'moment';
+import camelCase from 'camel-case';
 
 const devices = [
   {
@@ -58,6 +59,11 @@ let save = function(data) {
 
   let deferred = Q.defer();
 
+  Object.keys(data.Message).map(key => {
+    data.Message[camelCase(key)] = data.Message[key];
+    delete data.Message[key];
+  });
+
   data = Object.assign({
     timeStamp: moment(data.Time).format('X'),
     timeString: data.Time,
@@ -90,4 +96,4 @@ let readDevices = function() {
     .done(readDevices);
 };
 
-export default readDevices;
+readDevices();
