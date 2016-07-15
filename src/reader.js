@@ -70,7 +70,7 @@ let save = function(data) {
     category: data.category,
   }, data.Message);
 
-  let readings = db.ref('readings');
+  let readings = db.ref('readings/' + data.id);
 
   readings.push(data, (err) => {
     let dataStr = JSON.stringify(data);

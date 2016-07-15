@@ -1,8 +1,9 @@
 {
-  "presets": ["babel-preset-es2015-without-strict"],
+  "presets": ["es2015-without-strict"],
   "plugins": [
     "transform-object-rest-spread",
     "transform-react-jsx",
-    "babel-plugin-transform-es2015-destructuring"
+    "babel-plugin-transform-es2015-destructuring",
+    "transform-class-properties"
   ]
 }

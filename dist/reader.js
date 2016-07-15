@@ -45,10 +45,6 @@ module.exports =
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	
 	var _child_process = __webpack_require__(1);
 	
 	var _child_process2 = _interopRequireDefault(_child_process);
@@ -64,6 +60,14 @@ module.exports =
 	var _config = __webpack_require__(4);
 	
 	var _config2 = _interopRequireDefault(_config);
+	
+	var _moment = __webpack_require__(5);
+	
+	var _moment2 = _interopRequireDefault(_moment);
+	
+	var _camelCase = __webpack_require__(6);
+	
+	var _camelCase2 = _interopRequireDefault(_camelCase);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -81,7 +85,9 @@ module.exports =
 	
 	var db = _firebase2.default.database();
 	
-	var reading = db.ref("reading");
+	var meters = db.ref('meters');
+	
+	meters.set(devices);
 	
 	var read = function read(device) {
 	
@@ -115,9 +121,20 @@ module.exports =
 	
 	  var deferred = _q2.default.defer();
 	
-	  data = Object.assign({ timeStamp: data.Time, category: data.category }, data.Message);
+	  Object.keys(data.Message).map(function (key) {
+	    data.Message[(0, _camelCase2.default)(key)] = data.Message[key];
+	    delete data.Message[key];
+	  });
 	
-	  reading.set(data, function (err) {
+	  data = Object.assign({
+	    timeStamp: (0, _moment2.default)(data.Time).format('X'),
+	    timeString: data.Time,
+	    category: data.category
+	  }, data.Message);
+	
+	  var readings = db.ref('readings/' + data.id);
+	
+	  readings.push(data, function (err) {
 	    var dataStr = JSON.stringify(data);
 	
 	    if (err) {
@@ -136,7 +153,7 @@ module.exports =
 	  (0, _q2.default)(null).then(read.bind(null, devices[0])).then(save).then(read.bind(null, devices[1])).then(save).done(readDevices);
 	};
 	
-	exports.default = readDevices;
+	readDevices();
 
 /***/ },
 /* 1 */
@@ -161,12 +178,24 @@ module.exports =
 /***/ function(module, exports) {
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	  value: true
 	});
 	exports.default = {
-	    serviceAccount: process.env.FIREBASE_SERVER_CREDENTIALS,
-	    databaseURL: 'https://glaring-fire-6854.firebaseio.com/'
+	  serviceAccount: process.env.FIREBASE_SERVER_CREDENTIALS_PATH || 'credentials.json',
+	  databaseURL: 'https://glaring-fire-6854.firebaseio.com/'
 	};
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
+	module.exports = require("moment");
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	module.exports = require("camel-case");
 
 /***/ }
 /******/ ]);
