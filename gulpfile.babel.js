@@ -3,6 +3,7 @@ import gulp from 'gulp';
 import livereload from 'gulp-livereload';
 import webpackConfig from './webpack.config';
 import showStats from './showStats';
+import server from 'gulp-webserver';
 
 
 gulp.task('watchServer', () => {
@@ -20,6 +21,15 @@ gulp.task('watchServer', () => {
 gulp.task('watchClient', () => {
 
   let conf = webpackConfig();
+
+  gulp.src('./dist')
+    .pipe(server({
+      directoryListing: {
+        enable: true,
+        path: './dist',
+      },
+      host: '127.0.0.1',
+    }));
 
   livereload.listen({
     port: 35729,

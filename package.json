@@ -26,6 +26,7 @@
     "gulp": "^3.9.1",
     "gulp-livereload": "^3.8.1",
     "gulp-webpack": "^1.5.0",
+    "gulp-webserver": "^0.9.1",
     "jquery": "^2.2.4",
     "livereload": "^0.4.1",
     "moment": "^2.14.1",
@@ -35,7 +36,8 @@
     "react": "^15.1.0",
     "react-chartjs": "^0.7.3",
     "react-d3-basic": "^1.6.11",
-    "react-dom": "^15.1.0"
+    "react-dom": "^15.1.0",
+    "titlecase": "^1.1.2"
   },
   "devDependencies": {
     "babel-plugin-transform-object-rest-spread": "^6.8.0",
