@@ -4,19 +4,8 @@ import Q from 'q';
 import config from 'conf/config';
 import moment from 'moment';
 import camelCase from 'camel-case';
+import conf from './conf/config';
 
-const devices = [
-  {
-    msgType: 'scm',
-    deviceId: '43000657',
-    category: 'electric',
-  },
-  {
-    msgType: 'r900',
-    deviceId: '1541531110',
-    category: 'water',
-  },
-];
 
 firebase.initializeApp(config);
 
@@ -24,7 +13,7 @@ let db = firebase.database();
 
 let meters = db.ref('meters');
 
-meters.set(devices);
+meters.set(conf.devices);
 
 let read = function(device) {
 
@@ -70,7 +59,7 @@ let save = function(data) {
     category: data.category,
   }, data.Message);
 
-  let readings = db.ref('readings/' + data.id);
+  let readings = db.ref('newReadings/');
 
   readings.push(data, (err) => {
     let dataStr = JSON.stringify(data);
@@ -89,9 +78,9 @@ let save = function(data) {
 
 let readDevices = function() {
 
-  Q(null).then(read.bind(null, devices[0]))
+  Q(null).then(read.bind(null, conf.devices[0]))
     .then(save)
-    .then(read.bind(null, devices[1]))
+    .then(read.bind(null, conf.devices[1]))
     .then(save)
     .done(readDevices);
 };

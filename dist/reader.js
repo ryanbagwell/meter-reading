@@ -69,17 +69,11 @@ module.exports =
 	
 	var _camelCase2 = _interopRequireDefault(_camelCase);
 	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	var _config3 = __webpack_require__(4);
 	
-	var devices = [{
-	  msgType: 'scm',
-	  deviceId: '43000657',
-	  category: 'electric'
-	}, {
-	  msgType: 'r900',
-	  deviceId: '1541531110',
-	  category: 'water'
-	}];
+	var _config4 = _interopRequireDefault(_config3);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	_firebase2.default.initializeApp(_config2.default);
 	
@@ -87,7 +81,7 @@ module.exports =
 	
 	var meters = db.ref('meters');
 	
-	meters.set(devices);
+	meters.set(_config4.default.devices);
 	
 	var read = function read(device) {
 	
@@ -132,7 +126,7 @@ module.exports =
 	    category: data.category
 	  }, data.Message);
 	
-	  var readings = db.ref('readings/' + data.id);
+	  var readings = db.ref('newReadings/');
 	
 	  readings.push(data, function (err) {
 	    var dataStr = JSON.stringify(data);
@@ -150,7 +144,7 @@ module.exports =
 	
 	var readDevices = function readDevices() {
 	
-	  (0, _q2.default)(null).then(read.bind(null, devices[0])).then(save).then(read.bind(null, devices[1])).then(save).done(readDevices);
+	  (0, _q2.default)(null).then(read.bind(null, _config4.default.devices[0])).then(save).then(read.bind(null, _config4.default.devices[1])).then(save).done(readDevices);
 	};
 	
 	readDevices();
@@ -182,7 +176,21 @@ module.exports =
 	});
 	exports.default = {
 	  serviceAccount: process.env.FIREBASE_SERVER_CREDENTIALS_PATH || 'credentials.json',
-	  databaseURL: 'https://glaring-fire-6854.firebaseio.com/'
+	  databaseURL: 'https://glaring-fire-6854.firebaseio.com/',
+	  apiKey: 'AIzaSyDm4pY8-iMZt5WuSzVHH1TZJogQxI48xJI',
+	  devices: [{
+	    msgType: 'scm',
+	    deviceId: '43000657',
+	    category: 'electric',
+	    units: 'kw/h',
+	    costPerUnit: 0.22
+	  }, {
+	    msgType: 'r900',
+	    deviceId: '1541531110',
+	    category: 'water',
+	    units: 'ft³',
+	    costPerUnit: 0.1628
+	  }]
 	};
 
 /***/ },
