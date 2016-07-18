@@ -126,7 +126,7 @@ module.exports =
 	    category: data.category
 	  }, data.Message);
 	
-	  var readings = db.ref('newReadings/');
+	  var readings = db.ref('readings/' + data.id);
 	
 	  readings.push(data, function (err) {
 	    var dataStr = JSON.stringify(data);
