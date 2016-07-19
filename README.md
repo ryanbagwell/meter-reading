@@ -13,7 +13,7 @@
 
 ###To run the monitoring and logging facility:
 
-    ./node_modules/.bin/forever start ./dist/reader.js -l meter-reader.log -v -d
+    ./node_modules/.bin/forever start ./dist/reader.js -l meter-reader.log -o meter-reader.log -e meter-reader.log -a
 
 ###To run the monitoring and logging facility as a daemon:
 
