@@ -8,7 +8,7 @@ export function parseTimeString(timeStr) {
 
 export function formatTimeString(timeStr) {
   let t = parseTimeString(timeStr);
-  return t.format('M/D h:mm a');
+  return t.format('M/D h a');
 }
 
 export function cubicFeetToGallons(cuFt) {
