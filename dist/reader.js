@@ -183,13 +183,15 @@ module.exports =
 	    deviceId: '43000657',
 	    category: 'electric',
 	    units: 'kw/h',
-	    costPerUnit: 0.22
+	    costPerUnit: 0.22,
+	    decimalPlaces: 0
 	  }, {
 	    msgType: 'r900',
 	    deviceId: '1541531110',
 	    category: 'water',
 	    units: 'ft³',
-	    costPerUnit: 0.1628
+	    costPerUnit: 0.1628,
+	    decimalPlaces: 2
 	  }]
 	};
 
