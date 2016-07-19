@@ -45556,7 +45556,7 @@
 	
 	function formatTimeString(timeStr) {
 	  var t = parseTimeString(timeStr);
-	  return t.format('M/D h:mm a');
+	  return t.format('M/D h a');
 	}
 	
 	function cubicFeetToGallons(cuFt) {
@@ -60286,7 +60286,7 @@
 	    category: 'electric',
 	    units: 'kw/h',
 	    costPerUnit: 0.22,
-	    decimalPlaces: 0
+	    decimalPlaces: 2
 	  }, {
 	    msgType: 'r900',
 	    deviceId: '1541531110',

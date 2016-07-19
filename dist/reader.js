@@ -184,7 +184,7 @@ module.exports =
 	    category: 'electric',
 	    units: 'kw/h',
 	    costPerUnit: 0.22,
-	    decimalPlaces: 0
+	    decimalPlaces: 2
 	  }, {
 	    msgType: 'r900',
 	    deviceId: '1541531110',
