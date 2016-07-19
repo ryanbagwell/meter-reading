@@ -13,7 +13,7 @@
 
 ###To run the monitoring and logging facility:
 
-    ./node_modules/.bin/babel-node ./dist/reader.js >> /var/log/meter-reader.log 2>&1
+    ./node_modules/.bin/forever start ./dist/reader.js -l meter-reader.log -v -d
 
 ###To run the monitoring and logging facility as a daemon:
 
