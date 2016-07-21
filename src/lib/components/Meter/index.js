@@ -12,6 +12,7 @@ export default class Meter extends React.Component {
     msgType: React.PropTypes.string,
     units: React.PropTypes.string,
     costPerUnit: React.PropTypes.number,
+    decimalPlaces: 0,
     data: React.PropTypes.array,
   }
 
@@ -32,9 +33,11 @@ export default class Meter extends React.Component {
 
     db.orderByChild('timeStamp').limitToLast(1000).on('value', (snapshot) => {
 
-      let data = arrangeDataByHour(snapshot);
+      let data = arrangeDataByHour(snapshot, this.props.decimalPlaces);
 
       this.setState({data: data});
+
+      console.log(`${this.props.category} data updated`);
 
     });
 

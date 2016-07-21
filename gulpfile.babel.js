@@ -8,7 +8,7 @@ import server from 'gulp-webserver';
 
 gulp.task('watchServer', () => {
 
-  let conf = webpackConfig(true);
+  let conf = webpackConfig(true, true);
 
   webpack(conf).watch(100, (err, stats) => {
 
@@ -20,7 +20,7 @@ gulp.task('watchServer', () => {
 
 gulp.task('watchClient', () => {
 
-  let conf = webpackConfig();
+  let conf = webpackConfig(false, true);
 
   gulp.src('./dist')
     .pipe(server({
@@ -29,6 +29,7 @@ gulp.task('watchClient', () => {
         path: './dist',
       },
       host: '127.0.0.1',
+      port: 3000,
     }));
 
   livereload.listen({
@@ -47,7 +48,7 @@ gulp.task('watchClient', () => {
 
 gulp.task('buildServer', () => {
 
-  let conf = webpackConfig(true);
+  let conf = webpackConfig(true, false);
 
   webpack(conf, (err, stats) => {
 
@@ -59,7 +60,7 @@ gulp.task('buildServer', () => {
 
 gulp.task('buildClient', () => {
 
-  let conf = webpackConfig();
+  let conf = webpackConfig(false, false);
 
   webpack(conf, (err, stats) => {
 

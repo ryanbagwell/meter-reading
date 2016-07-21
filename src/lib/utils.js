@@ -8,7 +8,7 @@ export function parseTimeString(timeStr) {
 
 export function formatTimeString(timeStr) {
   let t = parseTimeString(timeStr);
-  return t.format('M/D h:mm a');
+  return t.format('M/D h a');
 }
 
 export function cubicFeetToGallons(cuFt) {
@@ -20,15 +20,26 @@ export function formatCost(cost) {
                                       currency: 'USD'});
 }
 
-export function arrangeDataByHour(snapshot) {
+export function addDecimalPlaces(number, decimalPlaces = 0) {
 
-  let readings = snapshot.val();
+  number = number.toString();
+
+  number = `${number.slice(0, number.length - decimalPlaces)}.${number.slice(number.length - decimalPlaces)}`;
+
+  return parseFloat(number);
+
+}
+
+
+export function arrangeDataByHour(snapshot, decimalPlaces = 0) {
+
+  let values = snapshot.val();
 
   let keys = Object.keys(snapshot.val());
 
   let hoursObj = keys.reduce((hours, currentKey, i, arr) => {
 
-    let data = readings[currentKey];
+    let data = values[currentKey];
 
     let hourStr = parseTimeString(data.timeString).format('YYYY-MM-DD:HH');
 
@@ -42,7 +53,6 @@ export function arrangeDataByHour(snapshot) {
 
   }, {});
 
-
   let hoursArr = Object.keys(hoursObj).map((key, i, arr) => {
 
     let readings = hoursObj[key];
@@ -51,10 +61,13 @@ export function arrangeDataByHour(snapshot) {
 
     let last = readings[readings.length - 1];
 
-    first.consumption = last.consumption - first.consumption;
-    first.index = i;
+    let final = Object.assign({}, first);
 
-    return first;
+    final.consumption = addDecimalPlaces(last.consumption - first.consumption, decimalPlaces);
+
+    final.index = i;
+
+    return final;
 
   }, []);
 

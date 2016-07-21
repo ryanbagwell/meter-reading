@@ -38,6 +38,7 @@
     "react-chartjs": "^0.7.3",
     "react-d3-basic": "^1.6.11",
     "react-dom": "^15.1.0",
+    "scriptjs": "^2.5.8",
     "simple-daemon": "^0.1.7",
     "titlecase": "^1.1.2"
   },

@@ -9,6 +9,7 @@ export default {
       category: 'electric',
       units: 'kw/h',
       costPerUnit: 0.22,
+      decimalPlaces: 2,
     },
     {
       msgType: 'r900',
@@ -16,6 +17,7 @@ export default {
       category: 'water',
       units: 'ft³',
       costPerUnit: 0.1628,
+      decimalPlaces: 2,
     },
   ],
 };

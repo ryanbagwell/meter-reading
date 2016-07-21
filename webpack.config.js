@@ -1,7 +1,8 @@
 import path from 'path';
 import fs from 'fs';
+import webpack from 'webpack';
 
-const webpackConf = (isServer = false) => {
+const webpackConf = (isServer = false, debug = false) => {
 
   let config,
     commonConfig = {
@@ -27,6 +28,11 @@ const webpackConf = (isServer = false) => {
           },
         ],
       },
+      plugins: [
+        new webpack.DefinePlugin({
+          DEBUG: debug,
+        }),
+      ],
     };
 
   let serverConfig = {
