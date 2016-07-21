@@ -4,17 +4,8 @@
 
 ###To start the receiver daemon:
 
-    sudo daemon -n rtl_tcp \
-    -u root \
-    -r \
-    -X "rtl_tcp -a 192.168.10.172 >> /var/log/rtltcp.log 2>&1" \
-    -o /var/log/rtl-tcp.log \
-    -l /var/log/rtl-tcp.log
-
-###To run the monitoring and logging facility:
-
-    ./node_modules/.bin/forever start ./dist/reader.js -l meter-reader.log -o meter-reader.log -e meter-reader.log -a
+    ./node_modules/.bin/forever start -l rtl-tcp.log -o rtl-tcp.log -e rtl-tcp.log -a -c /bin/bash ./scripts/run_rtl_tcp.sh
 
 ###To run the monitoring and logging facility as a daemon:
 
-   To Do.
+    ./node_modules/.bin/forever start -l meters.log -o meters.log -e meters.log -a ./dist/reader.js
