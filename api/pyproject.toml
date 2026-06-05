@@ -1,0 +1,22 @@
+[project]
+name = "meter-reader-api"
+version = "0.1.0"
+description = "Django REST API for meter reader energy data"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=5.0",
+    "django-ninja>=1.3",
+    "python-dateutil>=2.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-django",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "entry.settings"
+
+[tool.setuptools]
+py-modules = []
