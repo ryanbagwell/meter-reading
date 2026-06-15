@@ -1,10 +1,17 @@
 from pathlib import Path
 
+import environ
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "change-me-in-production"
+env = environ.Env(
+    DEBUG=(bool, False),
+    METER_API_REQUIRE_AUTH=(bool, False),
+)
 
-DEBUG = True
+SECRET_KEY = env.str("DJANGO_SECRET_KEY", default="change-me-in-production")
+
+DEBUG = env.bool("DJANGO_DEBUG", default=False)
 
 ALLOWED_HOSTS = ["*"]
 
@@ -63,5 +70,5 @@ STATIC_URL = "/static/"
 # ── API authentication ────────────────────────────────────────────────────────
 # Set METER_API_REQUIRE_AUTH = True to enforce the X-API-Key header on all
 # endpoints.  When False (default), all endpoints are publicly accessible.
-METER_API_REQUIRE_AUTH = False
-METER_API_KEY = ""
+METER_API_REQUIRE_AUTH = env.bool("METER_API_REQUIRE_AUTH", default=False)
+METER_API_KEY = env.str("METER_API_KEY", default="")

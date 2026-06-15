@@ -1,0 +1,18 @@
+[Unit]
+Description=Meter Reader RTL-SDR Daemon
+After=network.target meter-api.service
+Requires=meter-api.service
+
+[Service]
+Type=simple
+User=meter-reading
+Group=meter-reading
+WorkingDirectory=/opt/meter-reading/src/rtlamr-python
+ExecStart=/opt/meter-reading/bin/start-meter-reader.sh
+Restart=on-failure
+RestartSec=10s
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

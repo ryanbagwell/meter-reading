@@ -60,20 +60,27 @@ _DEFAULT_PROTOCOLS = {"scmplus", "scm", "idm", "netidm"}
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Multi-protocol ERT smart meter receiver")
     p.add_argument(
+        "--config",
+        default="/etc/meter-reading/rtlamr.toml",
+        metavar="PATH",
+        help="TOML config file (default: /etc/meter-reading/rtlamr.toml)",
+    )
+    p.add_argument(
         "--verbose",
         action="store_true",
+        default=None,
         help="print per-decoder stats to stderr every 500 blocks",
     )
     p.add_argument(
         "--chip-length",
         type=int,
-        default=72,
+        default=None,
         metavar="N",
         help="chip length in samples (default: 72 → ~2.36 MHz sample rate)",
     )
     p.add_argument(
         "--gain",
-        default="auto",
+        default=None,
         metavar="GAIN",
         help='tuner gain in dB or "auto" (default: auto)',
     )
@@ -93,7 +100,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument(
         "--duration",
         type=float,
-        default=0,
+        default=None,
         metavar="SECONDS",
         help="stop after this many seconds (0 = run forever)",
     )
@@ -120,6 +127,38 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return p.parse_args(argv)
 
 
+def _load_config(path: str) -> dict:
+    import tomllib
+    try:
+        with open(path, "rb") as f:
+            return tomllib.load(f)
+    except FileNotFoundError:
+        return {}
+
+
+_DEFAULTS: dict = {
+    "chip_length": 72,
+    "gain": "auto",
+    "duration": 0.0,
+    "verbose": False,
+}
+
+_CONFIG_KEYS = {
+    "api_url", "api_key", "meter_id", "protocol",
+    "gain", "chip_length", "duration", "verbose",
+}
+
+
+def _apply_config(args: argparse.Namespace, cfg: dict) -> None:
+    """Back-fill args still at None from cfg, then apply built-in defaults."""
+    for key in _CONFIG_KEYS:
+        if getattr(args, key) is None and key in cfg:
+            setattr(args, key, cfg[key])
+    for key, default in _DEFAULTS.items():
+        if getattr(args, key) is None:
+            setattr(args, key, default)
+
+
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(
         level=logging.INFO,
@@ -128,6 +167,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     args = parse_args(argv)
+    _apply_config(args, _load_config(args.config))
     chip = args.chip_length
 
     # Build the list of active decoders.

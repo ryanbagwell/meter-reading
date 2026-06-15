@@ -11,7 +11,7 @@ export async function fetchAggregate(
     bucket,
   });
 
-  const res = await fetch(`/api/proxy/aggregate?${params}`);
+  const res = await fetch(`/api/aggregate?${params}`);
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }

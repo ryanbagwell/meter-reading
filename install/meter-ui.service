@@ -1,0 +1,18 @@
+[Unit]
+Description=Meter Reading UI
+After=network.target meter-api.service
+
+[Service]
+Type=simple
+User=meter-reading
+Group=meter-reading
+WorkingDirectory=/opt/meter-reading/src/ui
+EnvironmentFile=/etc/meter-reading/meter-reading.env
+ExecStart=/opt/meter-reading/bin/start-meter-ui.sh
+Restart=on-failure
+RestartSec=5s
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

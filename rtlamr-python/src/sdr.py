@@ -28,11 +28,20 @@ class UsbSdr:
 
     def __init__(self, center_freq: int, sample_rate: int, gain: str | float = "auto") -> None:
         try:
+            # pyrtlsdr ≤ 0.3.0 does `import pkg_resources` at module level for
+            # version detection. setuptools ≥ 80 removed pkg_resources, so
+            # inject a minimal stub when the real module is absent.
+            import sys
+            if 'pkg_resources' not in sys.modules:
+                import importlib.util
+                import types
+                if importlib.util.find_spec('pkg_resources') is None:
+                    sys.modules['pkg_resources'] = types.ModuleType('pkg_resources')
             from rtlsdr import RtlSdr
         except ImportError:
             raise ImportError(
                 "pyrtlsdr is required for live hardware. "
-                "Install it with: pip install 'rtlamr-python[hardware]'"
+                "Install it with: pip install 'rtlamr-python'"
             )
         self._sdr = RtlSdr()
         self._sdr.center_freq = center_freq

@@ -1,0 +1,7 @@
+# RTL-SDR USB device rules
+# Grants members of the plugdev group access to RTL-SDR dongles without root.
+
+# RTL2832U (generic, used by most RTL-SDR sticks)
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0bda", ATTRS{idProduct}=="2832", GROUP="plugdev", MODE="0664"
+# RTL2832U with R820T/R820T2 tuner (most common RTL-SDR v3 dongles)
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0bda", ATTRS{idProduct}=="2838", GROUP="plugdev", MODE="0664"
