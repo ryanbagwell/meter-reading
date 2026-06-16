@@ -65,7 +65,8 @@ DATABASES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-STATIC_URL = "/static/"
+STATIC_URL = "/api-static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # ── API authentication ────────────────────────────────────────────────────────
 # Set METER_API_REQUIRE_AUTH = True to enforce the X-API-Key header on all

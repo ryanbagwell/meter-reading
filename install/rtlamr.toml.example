@@ -2,7 +2,7 @@
 # Installed to /etc/meter-reading/rtlamr.toml by the setup script.
 # CLI flags always take precedence over values in this file.
 
-api_url = http://localhost/api/meter/readings/
+api_url = "http://localhost/api/meter/readings/"
 # api_key = ""              # set if METER_API_REQUIRE_AUTH = true in meter-reading.env
 
 meter_id = 1554226342       # uncomment to filter readings to one specific meter

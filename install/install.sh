@@ -91,14 +91,23 @@ info "Running database migrations..."
 )
 info "  Migrations complete."
 
-# ─── 7. Set up rtlamr virtualenv ─────────────────────────────────────────────
+# ─── 7. Collect static files ─────────────────────────────────────────────────
+info "Collecting static files..."
+(
+    cd "$SRC_DIR/api"
+    DJANGO_SETTINGS_MODULE=entry.settings \
+        "$VENV_DIR/api/bin/python" manage.py collectstatic --noinput
+)
+info "  Static files collected."
+
+# ─── 9. Set up rtlamr virtualenv ─────────────────────────────────────────────
 info "Setting up rtlamr-python virtualenv..."
 [[ -d "$VENV_DIR/rtlamr" ]] || "$PYTHON" -m venv "$VENV_DIR/rtlamr"
 "$VENV_DIR/rtlamr/bin/pip" install --quiet --upgrade pip
 "$VENV_DIR/rtlamr/bin/pip" install --quiet --upgrade -e "$SRC_DIR/rtlamr-python"
 info "  rtlamr venv ready at $VENV_DIR/rtlamr"
 
-# ─── 8. Set up Node.js via nvm ───────────────────────────────────────────────
+# ─── 10. Set up Node.js via nvm ──────────────────────────────────────────────
 info "Setting up Node.js via nvm..."
 mkdir -p "$NVM_DIR"
 if [[ ! -s "$NVM_DIR/nvm.sh" ]]; then
@@ -117,13 +126,13 @@ nvm use "$NODE_VERSION"
 NPM=$(command -v npm) || error "npm not found after nvm setup."
 info "  Node.js: $(node --version)  npm: $(npm --version)"
 
-# ─── 9. Build Next.js UI ─────────────────────────────────────────────────────
+# ─── 11. Build Next.js UI ────────────────────────────────────────────────────
 info "Building Next.js UI (this may take a minute)..."
 "$NPM" --prefix "$SRC_DIR/ui" ci --silent
 "$NPM" --prefix "$SRC_DIR/ui" run build
 info "  UI build complete."
 
-# ─── 10. Install and configure nginx ─────────────────────────────────────────
+# ─── 12. Install and configure nginx ─────────────────────────────────────────
 info "Setting up nginx..."
 if ! command -v nginx &>/dev/null; then
     info "  nginx not found — installing via apt..."
@@ -139,14 +148,14 @@ ln -sf /etc/nginx/sites-available/meter-reading \
 nginx -t
 info "  nginx configured."
 
-# ─── 11. Install RTL-SDR udev rules ──────────────────────────────────────────
+# ─── 13. Install RTL-SDR udev rules ──────────────────────────────────────────
 info "Installing RTL-SDR udev rules..."
 install -m 644 "$SCRIPT_DIR/51-rtl-sdr.rules" /etc/udev/rules.d/
 udevadm control --reload-rules
 udevadm trigger
 info "  udev rules installed."
 
-# ─── 12. Install config files ────────────────────────────────────────────────
+# ─── 14. Install config files ────────────────────────────────────────────────
 info "Installing config files..."
 mkdir -p /etc/meter-reading
 if [[ -f "$ENV_FILE" ]]; then
@@ -164,7 +173,7 @@ else
     info "  Created /etc/meter-reading/rtlamr.toml — edit to configure the meter reader."
 fi
 
-# ─── 13. Install launcher scripts ────────────────────────────────────────────
+# ─── 15. Install launcher scripts ────────────────────────────────────────────
 info "Installing launcher scripts..."
 mkdir -p "$BIN_DIR"
 
@@ -184,11 +193,11 @@ chmod 755 "$BIN_DIR/start-meter-ui.sh"
 
 info "  Scripts installed to $BIN_DIR"
 
-# ─── 14. Set file ownership ──────────────────────────────────────────────────
+# ─── 16. Set file ownership ──────────────────────────────────────────────────
 info "Setting file ownership to '$SERVICE_USER'..."
 chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
 
-# ─── 15. Install systemd units ───────────────────────────────────────────────
+# ─── 17. Install systemd units ───────────────────────────────────────────────
 info "Installing systemd service units..."
 for unit in meter-api meter-reader meter-ui; do
     install -m 644 "$SCRIPT_DIR/${unit}.service" /etc/systemd/system/
@@ -196,7 +205,7 @@ for unit in meter-api meter-reader meter-ui; do
 done
 systemctl daemon-reload
 
-# ─── 16. Enable and start services ───────────────────────────────────────────
+# ─── 18. Enable and start services ───────────────────────────────────────────
 info "Enabling services at boot..."
 systemctl enable meter-api meter-reader meter-ui nginx
 
