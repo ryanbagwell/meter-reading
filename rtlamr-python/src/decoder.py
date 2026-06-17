@@ -222,6 +222,13 @@ class Decoder:
     def block_size2(self) -> int:
         return self.cfg.block_size2
 
+    def reset(self) -> None:
+        """Zero rolling buffers and clear dedup sets. Call after an SDR retune."""
+        self._signal[:] = 0
+        self._quantized[:] = 0
+        self._prev_digests.clear()
+        self._next_digests.clear()
+
     def decode(self, raw_block: bytes) -> list[Any]:
         """Process one raw IQ block; return any newly decoded messages."""
         cfg = self.cfg

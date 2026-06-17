@@ -1,17 +1,17 @@
-import type { AggregateBucket, BucketSize } from './types';
+import type { MeterReading } from './types';
 
-export async function fetchAggregate(
+export async function fetchMeterReadings(
   start: Date,
   end: Date,
-  bucket: BucketSize
-): Promise<AggregateBucket[]> {
+  limit = 500,
+): Promise<MeterReading[]> {
   const params = new URLSearchParams({
     start: start.toISOString(),
     end: end.toISOString(),
-    bucket,
+    limit: String(limit),
   });
 
-  const res = await fetch(`/api/aggregate?${params}`);
+  const res = await fetch(`/api/meter/readings/?${params}`);
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }

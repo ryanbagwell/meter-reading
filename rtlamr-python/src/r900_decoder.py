@@ -187,12 +187,23 @@ class R900Decoder:
         self._man_quantized = np.zeros(buf_len, dtype=np.uint8)
 
         # R900 signal chain
-        # Extra chip*4 samples so the 4-chip filter covers the full buffer.
-        self._r900_signal = np.zeros(buf_len + chip * 4, dtype=np.float64)
+        # block_size extra samples at the front so the rolling shift can read
+        # buf_len elements starting at block_size without going out of bounds.
+        # The chip*4 tail provides filter continuity beyond buf_len.
+        self._r900_signal = np.zeros(block_size + buf_len + chip * 4, dtype=np.float64)
         self._r900_quantized = np.zeros(buf_len, dtype=np.uint8)
 
         self._prev_seen: set[str] = set()
         self._next_seen: set[str] = set()
+
+    def reset(self) -> None:
+        """Zero rolling buffers and clear dedup sets. Call after an SDR retune."""
+        self._man_signal[:] = 0
+        self._man_quantized[:] = 0
+        self._r900_signal[:] = 0
+        self._r900_quantized[:] = 0
+        self._prev_seen.clear()
+        self._next_seen.clear()
 
     def decode(self, raw_block: bytes) -> list[R900]:
         chip = self._chip
@@ -213,8 +224,13 @@ class R900Decoder:
         self._man_quantized[packet_len:] = filt_man
 
         # --- R900 4-chip chain (payload decoding) ---
-        # Shift signal left by block_size; new magnitudes fill the tail.
-        self._r900_signal[:buf_len] = self._r900_signal[block_size: block_size + buf_len]
+        # Roll the signal buffer left by block_size.  The buffer is
+        # (block_size + buf_len + chip*4) samples wide so [block_size:] has exactly
+        # (buf_len + chip*4) elements — the same count as [:-block_size].
+        # New magnitudes fill position [packet_len:packet_len+block_size] so that
+        # _r900_signal[packet_len+k] == mag[k], matching the Manchester chain's
+        # alignment (_man_quantized[packet_len+k] also comes from mag[k]).
+        self._r900_signal[:-block_size] = self._r900_signal[block_size:]
         self._r900_signal[packet_len: packet_len + block_size] = mag
 
         r900_filt = _r900_filter(self._r900_signal[:buf_len + chip * 4], chip)

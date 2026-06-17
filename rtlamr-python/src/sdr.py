@@ -19,6 +19,10 @@ class SampleSource(Protocol):
         """Return exactly *n_bytes* of raw uint8 IQ data."""
         ...
 
+    def set_center_freq(self, freq: int) -> None:
+        """Retune the source to *freq* Hz."""
+        ...
+
     def close(self) -> None:
         ...
 
@@ -26,7 +30,7 @@ class SampleSource(Protocol):
 class UsbSdr:
     """Live RTL-SDR dongle via pyrtlsdr."""
 
-    def __init__(self, center_freq: int, sample_rate: int, gain: str | float = "auto") -> None:
+    def __init__(self, center_freq: int, sample_rate: int, gain: str | float = "auto", ppm: int = 0) -> None:
         try:
             # pyrtlsdr ≤ 0.3.0 does `import pkg_resources` at module level for
             # version detection. setuptools ≥ 80 removed pkg_resources, so
@@ -46,6 +50,7 @@ class UsbSdr:
         self._sdr = RtlSdr()
         self._sdr.center_freq = center_freq
         self._sdr.sample_rate = sample_rate
+        self._sdr.ppm_error = ppm
         if gain == "auto":
             self._sdr.gain = "auto"
         else:
@@ -53,8 +58,10 @@ class UsbSdr:
 
     def read_block(self, n_bytes: int) -> bytes:
         """Read *n_bytes* uint8 IQ samples from the dongle."""
-        # pyrtlsdr read_bytes returns raw uint8 IQ data
         return bytes(self._sdr.read_bytes(n_bytes))
+
+    def set_center_freq(self, freq: int) -> None:
+        self._sdr.center_freq = freq
 
     def close(self) -> None:
         self._sdr.close()
@@ -75,6 +82,9 @@ class FileSampleSource:
             data = self._fh.read(n_bytes)
         return data
 
+    def set_center_freq(self, freq: int) -> None:
+        pass  # no-op; file captures are frequency-agnostic
+
     def close(self) -> None:
         self._fh.close()
 
@@ -83,9 +93,10 @@ def open_source(
     center_freq: int,
     sample_rate: int,
     gain: str | float = "auto",
+    ppm: int = 0,
     sample_file: str | None = None,
 ) -> SampleSource:
     """Return the appropriate SampleSource based on whether a file path was given."""
     if sample_file:
         return FileSampleSource(sample_file)
-    return UsbSdr(center_freq, sample_rate, gain)
+    return UsbSdr(center_freq, sample_rate, gain, ppm)

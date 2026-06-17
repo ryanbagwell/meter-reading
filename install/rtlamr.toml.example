@@ -5,14 +5,19 @@
 api_url = "http://localhost/api/meter/readings/"
 # api_key = ""              # set if METER_API_REQUIRE_AUTH = true in meter-reading.env
 
-meter_id = 1554226342       # uncomment to filter readings to one specific meter
+# meter_ids = [1554226342]           # filter to one meter
+# meter_ids = [1554226342, 9876543]  # filter to multiple meters
 
-# Protocol to decode. Options: scmplus, scm, idm, netidm, r900
+# Protocol(s) to decode. Options: scmplus, scm, idm, netidm, r900
 # Leave commented to decode all Manchester protocols (scmplus, scm, idm, netidm).
-protocol = "scmplus"
+# protocol = "scmplus"                 # single Manchester protocol
+# protocol = ["scmplus", "r900"]       # alternate between Manchester and R900
+# switch_timeout = 60                  # seconds to wait for a message before switching frequencies (alternating mode only)
 
 # Hardware tuning — safe to leave at defaults
-# gain        = "auto"      # tuner gain in dB, or "auto"
-# chip_length = 72          # chip length in samples (~2.36 MHz sample rate)
+# gain             = "auto" # tuner gain in dB, or "auto"
+# freq_correction  = 0      # RTL-SDR oscillator error in PPM (run `rtl_test -p` to measure;
+#                           #   negative if signals appear below their expected frequency)
+# chip_length      = 72     # chip length in samples (~2.36 MHz sample rate)
 # verbose     = false
 # duration    = 0           # stop after N seconds; 0 = run forever

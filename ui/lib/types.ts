@@ -1,8 +1,9 @@
-export interface AggregateBucket {
-  bucketStart: string;
-  meterConsumptionDelta: number | null;
-  solarEnergyWh: number | null;
-  netImportWh: number | null;
+export interface MeterReading {
+  id: number;
+  timestamp: string;
+  endpointId: number;
+  protocol: string;
+  endpointType: number | null;
+  consumption: number;
+  tamper: number | null;
 }
-
-export type BucketSize = 'hour' | 'day';

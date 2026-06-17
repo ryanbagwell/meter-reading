@@ -21,8 +21,11 @@ Usage:
   # From a recorded capture file
   python main.py --sample-file /path/to/capture.bin
 
-  # Filter to a single meter once you know its ID
+  # Filter to specific meters
   python main.py --meter-id 12345678
+
+  # Alternate between Manchester and R900 (different center frequencies)
+  python main.py --protocol scmplus r900
 """
 
 from __future__ import annotations
@@ -85,11 +88,23 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help='tuner gain in dB or "auto" (default: auto)',
     )
     p.add_argument(
-        "--meter-id",
+        "--freq-correction",
         type=int,
         default=None,
+        metavar="PPM",
+        dest="freq_correction",
+        help="frequency correction for the RTL-SDR oscillator in parts per million "
+             "(negative if signals appear below their expected frequency)",
+    )
+    p.add_argument(
+        "--meter-id",
+        type=int,
+        nargs="+",
+        default=None,
         metavar="ID",
-        help="only print messages from this EndpointID",
+        dest="meter_id",
+        help="only forward readings from these endpoint IDs (space-separated); "
+             "overrides meter_ids in the config file",
     )
     p.add_argument(
         "--sample-file",
@@ -106,10 +121,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     p.add_argument(
         "--protocol",
+        nargs="+",
         choices=list(_MANCHESTER_PROTOCOLS) + ["r900"],
         default=None,
         metavar="PROTO",
-        help="decode only this protocol (default: all Manchester protocols)",
+        help="protocols to decode (space-separated); default: all Manchester",
     )
     p.add_argument(
         "--api-url",
@@ -123,6 +139,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=None,
         metavar="KEY",
         help="value for the X-API-Key header (only needed when the API requires auth)",
+    )
+    p.add_argument(
+        "--switch-timeout",
+        type=float,
+        default=None,
+        metavar="SECONDS",
+        help="alternating mode: switch frequency after this many seconds without "
+             "a message (default: 60)",
     )
     return p.parse_args(argv)
 
@@ -139,19 +163,36 @@ def _load_config(path: str) -> dict:
 _DEFAULTS: dict = {
     "chip_length": 72,
     "gain": "auto",
+    "freq_correction": 0,
     "duration": 0.0,
     "verbose": False,
+    "switch_timeout": 60.0,
 }
 
 _CONFIG_KEYS = {
-    "api_url", "api_key", "meter_id", "protocol",
-    "gain", "chip_length", "duration", "verbose",
+    "api_url", "api_key", "meter_id", "meter_ids", "protocol", "switch_timeout",
+    "gain", "freq_correction", "chip_length", "duration", "verbose",
 }
 
 
 def _apply_config(args: argparse.Namespace, cfg: dict) -> None:
     """Back-fill args still at None from cfg, then apply built-in defaults."""
-    for key in _CONFIG_KEYS:
+    # Normalize meter ID to list[int] or None.
+    if args.meter_id is None:
+        if "meter_ids" in cfg:
+            args.meter_id = list(cfg["meter_ids"])
+        elif "meter_id" in cfg:
+            args.meter_id = [cfg["meter_id"]]  # legacy single-int key
+
+    # Normalize protocol to list[str] or None.
+    if args.protocol is None and "protocol" in cfg:
+        raw = cfg["protocol"]
+        if isinstance(raw, list):
+            args.protocol = raw
+        else:
+            args.protocol = [p.strip() for p in str(raw).split(",")]
+
+    for key in _CONFIG_KEYS - {"meter_id", "meter_ids", "protocol"}:
         if getattr(args, key) is None and key in cfg:
             setattr(args, key, cfg[key])
     for key, default in _DEFAULTS.items():
@@ -171,15 +212,14 @@ def main(argv: list[str] | None = None) -> int:
     chip = args.chip_length
 
     # Build the list of active decoders.
-    # R900 uses a completely different signal chain and center frequency.
-    use_r900 = args.protocol == "r900"
-    if args.protocol and args.protocol != "r900":
-        manchester_protos = {args.protocol: _MANCHESTER_PROTOCOLS[args.protocol]}
-    elif use_r900:
-        manchester_protos = {}
-    else:
-        manchester_protos = {k: v for k, v in _MANCHESTER_PROTOCOLS.items()
-                             if k in _DEFAULT_PROTOCOLS}
+    selected = set(args.protocol) if args.protocol else None
+    use_r900 = "r900" in selected if selected else False
+    manchester_names = (selected - {"r900"}) if selected else set(_DEFAULT_PROTOCOLS)
+
+    manchester_protos = {
+        k: v for k, v in _MANCHESTER_PROTOCOLS.items()
+        if k in manchester_names
+    }
 
     decoders: list[Decoder] = []
     for name, (make_cfg, parser) in manchester_protos.items():
@@ -203,17 +243,19 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     # Determine center_freq and sample_rate for the SDR source.
-    if r900_decoder is not None:
-        center_freq = r900_decoder.center_freq
-        sample_rate = r900_decoder.sample_rate
-    else:
+    # Alternating mode starts on Manchester; R900-only starts on R900.
+    if decoders:
         center_freq = decoders[0].cfg.center_freq
         sample_rate = decoders[0].cfg.sample_rate
+    else:
+        center_freq = r900_decoder.center_freq
+        sample_rate = r900_decoder.sample_rate
 
     source = open_source(
         center_freq=center_freq,
         sample_rate=sample_rate,
         gain=args.gain,
+        ppm=args.freq_correction,
         sample_file=args.sample_file,
     )
 
@@ -231,16 +273,11 @@ def main(argv: list[str] | None = None) -> int:
 
     start = time.monotonic()
 
-    # Different decoders may have different block sizes.  Read at the minimum
-    # block_size2 and accumulate bytes for larger-block decoders.
-    # We read in multiples of min_block to reduce Python loop overhead — fewer
-    # iterations per byte means less CPU time stolen from SDR USB transfers.
     all_decoder_objs = decoders + ([r900_decoder] if r900_decoder else [])
     min_block = min(d.block_size2 for d in all_decoder_objs)
-    read_size = min_block * 8  # 8× fewer loop iterations, same total throughput
+    read_size = min_block * 8
     buffers: dict[int, bytearray] = defaultdict(bytearray)
 
-    # Stats tracking (used when --verbose is set).
     proto_names = list(manchester_protos) + (["r900"] if r900_decoder else [])
     _stats: dict[int, dict] = {
         id(d): {"name": name, "blocks": 0, "messages": 0}
@@ -248,60 +285,138 @@ def main(argv: list[str] | None = None) -> int:
     }
     _total_chunks = 0
     _STATS_INTERVAL = 500
-    _HEARTBEAT_INTERVAL = 30  # seconds between "listening…" log lines
+    _HEARTBEAT_INTERVAL = 30
     _last_heartbeat = start
 
+    def _emit_record(record, d) -> bool:
+        """Apply meter_id filter, write to stdout, post to API. Returns True if forwarded."""
+        endpoint_id = record.get("endpoint_id")
+        if args.meter_id is not None and endpoint_id not in args.meter_id:
+            return False
+        _stats[id(d)]["messages"] += 1
+        sys.stdout.write(json.dumps(record) + "\n")
+        sys.stdout.flush()
+        if poster:
+            poster.submit(record)
+        return True
+
+    def _drain_decoder(d) -> bool:
+        """Process all complete blocks buffered for *d*. Returns True if any message forwarded."""
+        buf = buffers[id(d)]
+        forwarded = False
+        while len(buf) >= d.block_size2:
+            block_bytes = bytes(buf[: d.block_size2])
+            del buf[: d.block_size2]
+            _stats[id(d)]["blocks"] += 1
+            for msg in d.decode(block_bytes):
+                record = {"time": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+                record.update(msg.as_dict())
+                if _emit_record(record, d):
+                    forwarded = True
+        return forwarded
+
+    alternating = bool(decoders) and r900_decoder is not None
+
     try:
-        while running:
-            if args.duration > 0 and (time.monotonic() - start) >= args.duration:
-                LOG.info("Duration reached.")
-                break
+        if alternating:
+            _MAN_FREQ = decoders[0].cfg.center_freq
+            _R900_FREQ = r900_decoder.center_freq
+            _SETTLE_BLOCKS = 4  # blocks to discard after retuning (~14 ms)
 
-            chunk = source.read_block(read_size)
-            if not chunk:
-                break
+            def _retune(new_freq, reset_targets):
+                source.set_center_freq(new_freq)
+                for _ in range(_SETTLE_BLOCKS):
+                    source.read_block(read_size)
+                for d in reset_targets:
+                    d.reset()
+                    buffers[id(d)].clear()
 
-            _total_chunks += 1
+            mode = "manchester"
 
-            for d in all_decoder_objs:
-                buffers[id(d)] += chunk
-                buf = buffers[id(d)]
-                while len(buf) >= d.block_size2:
-                    block_bytes = bytes(buf[: d.block_size2])
-                    del buf[: d.block_size2]
-                    _stats[id(d)]["blocks"] += 1
-                    for msg in d.decode(block_bytes):
-                        record = {"time": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
-                        record.update(msg.as_dict())
-                        endpoint_id = record.get("endpoint_id")
-                        if args.meter_id is not None and endpoint_id != args.meter_id:
-                            continue
-                        _stats[id(d)]["messages"] += 1
-                        sys.stdout.write(json.dumps(record) + "\n")
-                        sys.stdout.flush()
-                        if poster:
-                            poster.submit(record)
+            while running:
+                if args.duration > 0 and (time.monotonic() - start) >= args.duration:
+                    LOG.info("Duration reached.")
+                    break
 
-            now = time.monotonic()
-            if args.verbose and now - _last_heartbeat >= _HEARTBEAT_INTERVAL:
-                elapsed = now - start
-                total_printed = sum(s["messages"] for s in _stats.values())
-                LOG.info("listening… t=%ds chunks=%d messages=%d", elapsed, _total_chunks, total_printed)
-                _last_heartbeat = now
+                active = decoders if mode == "manchester" else [r900_decoder]
+                mode_deadline = time.monotonic() + args.switch_timeout
+                found = False
 
-            if args.verbose and _total_chunks % _STATS_INTERVAL == 0:
-                elapsed = time.monotonic() - start
-                parts = [f"t={elapsed:.0f}s chunks={_total_chunks}"]
-                for d, s in zip(all_decoder_objs, _stats.values()):
-                    ds = getattr(d, "stats", {})
-                    parts.append(
-                        f"{s['name']}:blocks={s['blocks']}"
-                        f",cands={ds.get('candidates', '?')}"
-                        f",ok={ds.get('parse_ok', '?')}"
-                        f",dedup={ds.get('dedup_drop', '?')}"
-                        f",printed={s['messages']}"
+                while running and not found:
+                    if time.monotonic() >= mode_deadline:
+                        LOG.info("Switch timeout on %s — switching.", mode)
+                        break
+
+                    chunk = source.read_block(read_size)
+                    if not chunk:
+                        running = False
+                        break
+                    _total_chunks += 1
+
+                    for d in active:
+                        buffers[id(d)] += chunk
+                        if _drain_decoder(d):
+                            found = True
+
+                now = time.monotonic()
+                if args.verbose and now - _last_heartbeat >= _HEARTBEAT_INTERVAL:
+                    elapsed = now - start
+                    total_printed = sum(s["messages"] for s in _stats.values())
+                    LOG.info(
+                        "listening… t=%ds chunks=%d messages=%d mode=%s",
+                        elapsed, _total_chunks, total_printed, mode,
                     )
-                LOG.info("stats: %s", " | ".join(parts))
+                    _last_heartbeat = now
+
+                if mode == "manchester":
+                    mode = "r900"
+                    LOG.info("Switching to R900 mode (center_freq=%d).", _R900_FREQ)
+                    _retune(_R900_FREQ, [r900_decoder])
+                else:
+                    mode = "manchester"
+                    LOG.info("Switching to Manchester mode (center_freq=%d).", _MAN_FREQ)
+                    _retune(_MAN_FREQ, decoders)
+
+        else:
+            # Normal loop: all selected decoders run on the same frequency concurrently.
+            while running:
+                if args.duration > 0 and (time.monotonic() - start) >= args.duration:
+                    LOG.info("Duration reached.")
+                    break
+
+                chunk = source.read_block(read_size)
+                if not chunk:
+                    break
+
+                _total_chunks += 1
+
+                for d in all_decoder_objs:
+                    buffers[id(d)] += chunk
+                    _drain_decoder(d)
+
+                now = time.monotonic()
+                if args.verbose and now - _last_heartbeat >= _HEARTBEAT_INTERVAL:
+                    elapsed = now - start
+                    total_printed = sum(s["messages"] for s in _stats.values())
+                    LOG.info(
+                        "listening… t=%ds chunks=%d messages=%d",
+                        elapsed, _total_chunks, total_printed,
+                    )
+                    _last_heartbeat = now
+
+                if args.verbose and _total_chunks % _STATS_INTERVAL == 0:
+                    elapsed = time.monotonic() - start
+                    parts = [f"t={elapsed:.0f}s chunks={_total_chunks}"]
+                    for d, s in zip(all_decoder_objs, _stats.values()):
+                        ds = getattr(d, "stats", {})
+                        parts.append(
+                            f"{s['name']}:blocks={s['blocks']}"
+                            f",cands={ds.get('candidates', '?')}"
+                            f",ok={ds.get('parse_ok', '?')}"
+                            f",dedup={ds.get('dedup_drop', '?')}"
+                            f",printed={s['messages']}"
+                        )
+                    LOG.info("stats: %s", " | ".join(parts))
 
     finally:
         source.close()

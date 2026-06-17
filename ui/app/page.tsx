@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
-import { fetchAggregate } from '@/lib/api';
-import type { AggregateBucket, BucketSize } from '@/lib/types';
-import { EnergyChart } from '@/components/EnergyChart';
-import { SummaryCards } from '@/components/SummaryCards';
+import { Alert, Box, CircularProgress, Container, Typography } from '@mui/material';
+import { fetchMeterReadings } from '@/lib/api';
+import type { MeterReading } from '@/lib/types';
+import { ReadingsChart } from '@/components/ReadingsChart';
+import { ReadingsSummary } from '@/components/ReadingsSummary';
 import { DateRangeControls } from '@/components/DateRangeControls';
 import type { RangePreset } from '@/components/DateRangeControls';
 
@@ -15,55 +16,51 @@ function getDefaultPreset(): RangePreset {
     label: 'Last 7 days',
     start: startOfDay(subDays(now, 6)),
     end: endOfDay(now),
-    bucket: 'hour',
   };
 }
 
 export default function Dashboard() {
   const [preset, setPreset] = useState<RangePreset>(getDefaultPreset);
-  const [data, setData] = useState<AggregateBucket[]>([]);
+  const [readings, setReadings] = useState<MeterReading[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetchAggregate(preset.start, preset.end, preset.bucket as BucketSize)
-      .then(setData)
+    fetchMeterReadings(preset.start, preset.end)
+      .then(setReadings)
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }, [preset]);
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <h1 className="text-xl font-semibold text-gray-900">
-            Energy Dashboard
-          </h1>
-          <DateRangeControls
-            activeLabel={preset.label}
-            onSelect={setPreset}
-          />
-        </div>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Meter Readings
+          </Typography>
+          <DateRangeControls activeLabel={preset.label} onSelect={setPreset} />
+        </Box>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 text-sm">
+          <Alert severity="error" sx={{ mb: 3 }}>
             Failed to load data: {error}
-          </div>
+          </Alert>
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center h-64 text-gray-400 text-sm">
-            Loading…
-          </div>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 256 }}>
+            <CircularProgress />
+          </Box>
         ) : (
-          <>
-            <SummaryCards data={data} />
-            <EnergyChart data={data} bucket={preset.bucket as BucketSize} />
-          </>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <ReadingsSummary readings={readings} />
+            <ReadingsChart readings={readings} />
+          </Box>
         )}
-      </div>
-    </main>
+      </Container>
+    </Box>
   );
 }

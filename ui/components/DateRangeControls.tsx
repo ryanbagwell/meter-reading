@@ -1,13 +1,11 @@
 'use client';
 
 import { startOfDay, endOfDay, subDays } from 'date-fns';
-import type { BucketSize } from '@/lib/types';
 
 export interface RangePreset {
   label: string;
   start: Date;
   end: Date;
-  bucket: BucketSize;
 }
 
 export function getPresets(): RangePreset[] {
@@ -17,19 +15,16 @@ export function getPresets(): RangePreset[] {
       label: 'Today',
       start: startOfDay(now),
       end: endOfDay(now),
-      bucket: 'hour',
     },
     {
       label: 'Last 7 days',
       start: startOfDay(subDays(now, 6)),
       end: endOfDay(now),
-      bucket: 'hour',
     },
     {
       label: 'Last 30 days',
       start: startOfDay(subDays(now, 29)),
       end: endOfDay(now),
-      bucket: 'day',
     },
   ];
 }
