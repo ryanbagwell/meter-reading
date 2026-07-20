@@ -3,7 +3,7 @@ export interface MeterReading {
   timestamp: string;
   endpointId: number;
   protocol: string;
-  endpointType: number | null;
+  endpointType: string | null;
   consumption: number;
   tamper: number | null;
 }

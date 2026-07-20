@@ -14,7 +14,7 @@ class MeterReadingIn(_CamelSchema):
     timestamp: datetime
     endpoint_id: int
     protocol: str
-    endpoint_type: int | None = None
+    endpoint_type: str | None = None
     consumption: int
     tamper: int | None = None
 
@@ -24,7 +24,7 @@ class MeterReadingOut(_CamelSchema):
     timestamp: datetime
     endpoint_id: int
     protocol: str
-    endpoint_type: int | None
+    endpoint_type: str | None
     consumption: int
     tamper: int | None
 

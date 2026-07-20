@@ -89,6 +89,15 @@ def list_meter_readings(
     return list(qs[offset : offset + limit])
 
 
+@meter_router.get("/endpoints/", response=list[int])
+def list_meter_endpoints(request):
+    return list(
+        MeterReading.objects.values_list("endpoint_id", flat=True)
+        .distinct()
+        .order_by("endpoint_id")
+    )
+
+
 # ── Solar readings ─────────────────────────────────────────────────────────────
 
 

@@ -5,7 +5,7 @@ class MeterReading(models.Model):
     timestamp = models.DateTimeField(db_index=True)
     endpoint_id = models.PositiveIntegerField(db_index=True)
     protocol = models.CharField(max_length=16)
-    endpoint_type = models.PositiveSmallIntegerField(null=True, blank=True)
+    endpoint_type = models.CharField(max_length=32, null=True, blank=True)
     consumption = models.PositiveBigIntegerField()
     tamper = models.PositiveSmallIntegerField(null=True, blank=True)
 

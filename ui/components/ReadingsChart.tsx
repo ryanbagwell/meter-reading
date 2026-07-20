@@ -7,37 +7,59 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer,
 } from 'recharts';
 import { format } from 'date-fns';
 import { Card, CardContent, Typography } from '@mui/material';
 import type { MeterReading } from '@/lib/types';
+import { meterLabel } from '@/lib/commodity';
 
-interface ChartRow {
-  label: string;
-  consumption: number;
-}
+const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
 
 function parseUTC(s: string): Date {
   const hasOffset = s.endsWith('Z') || /[+-]\d{2}:?\d{2}$/.test(s);
   return new Date(hasOffset ? s : s + 'Z');
 }
 
-function toChartData(readings: MeterReading[]): ChartRow[] {
-  // API returns newest-first; reverse for chronological display.
-  return [...readings].reverse().map((r) => ({
-    label: format(parseUTC(r.timestamp), 'MMM d h:mm aaa'),
-    consumption: r.consumption,
-  }));
+function formatLabel(ts: string): string {
+  return format(parseUTC(ts), 'MMM d h:mm aaa');
 }
 
-export function ReadingsChart({ readings }: { readings: MeterReading[] }) {
-  const data = toChartData(readings);
+type ChartRow = Record<string, string | number>;
+
+function buildChartData(readingsByMeter: Record<number, MeterReading[]>): ChartRow[] {
+  // Key by ISO minute so readings from different meters align on the same x-axis tick.
+  const timeMap = new Map<string, ChartRow>();
+
+  for (const [id, readings] of Object.entries(readingsByMeter)) {
+    for (const r of [...readings].reverse()) {
+      const key = r.timestamp.slice(0, 16);
+      if (!timeMap.has(key)) {
+        timeMap.set(key, { _key: key, label: formatLabel(r.timestamp) });
+      }
+      timeMap.get(key)![`m${id}`] = r.consumption;
+    }
+  }
+
+  return Array.from(timeMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, row]) => row);
+}
+
+export function ReadingsChart({
+  readingsByMeter,
+}: {
+  readingsByMeter: Record<number, MeterReading[]>;
+}) {
+  const meterIds = Object.keys(readingsByMeter).map(Number);
+  const data = buildChartData(readingsByMeter);
+  const isEmpty = data.length === 0;
 
   return (
     <Card variant="outlined">
       <CardContent>
-        {data.length === 0 ? (
+        {isEmpty ? (
           <Typography
             variant="body2"
             color="text.secondary"
@@ -64,16 +86,20 @@ export function ReadingsChart({ readings }: { readings: MeterReading[] }) {
                   style: { fontSize: 11, fill: '#6b7280' },
                 }}
               />
-              <Tooltip formatter={(value) => [`${value}`, 'Consumption']} />
-              <Line
-                type="monotone"
-                dataKey="consumption"
-                name="Meter Reading"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={false}
-                connectNulls
-              />
+              <Tooltip />
+              <Legend />
+              {meterIds.map((id, i) => (
+                <Line
+                  key={id}
+                  type="monotone"
+                  dataKey={`m${id}`}
+                  name={meterLabel(id, readingsByMeter[id]?.[0]?.endpointType)}
+                  stroke={COLORS[i % COLORS.length]}
+                  strokeWidth={2}
+                  dot={false}
+                  connectNulls
+                />
+              ))}
             </LineChart>
           </ResponsiveContainer>
         )}
