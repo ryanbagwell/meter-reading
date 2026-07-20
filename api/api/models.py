@@ -1,9 +1,17 @@
 from django.db import models
 
 
+class Endpoint(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    endpoint_type = models.CharField(max_length=32, null=True, blank=True)
+
+    def __str__(self):
+        return f"Endpoint({self.id})"
+
+
 class MeterReading(models.Model):
     timestamp = models.DateTimeField(db_index=True)
-    endpoint_id = models.PositiveIntegerField(db_index=True)
+    endpoint = models.ForeignKey(Endpoint, on_delete=models.PROTECT, related_name="readings")
     protocol = models.CharField(max_length=16)
     endpoint_type = models.CharField(max_length=32, null=True, blank=True)
     consumption = models.PositiveBigIntegerField()
@@ -12,7 +20,7 @@ class MeterReading(models.Model):
     class Meta:
         ordering = ["-timestamp"]
         indexes = [
-            models.Index(fields=["endpoint_id", "timestamp"]),
+            models.Index(fields=["endpoint", "timestamp"], name="api_meterre_endpoin_2c0cac_idx"),
         ]
 
     def __str__(self):

@@ -29,6 +29,11 @@ class MeterReadingOut(_CamelSchema):
     tamper: int | None
 
 
+class MeterEndpointOut(_CamelSchema):
+    id: int
+    endpoint_type: str | None
+
+
 class SolarReadingIn(_CamelSchema):
     timestamp: datetime
     power_watts: float

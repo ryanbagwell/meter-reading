@@ -9,10 +9,11 @@ from ninja.responses import NinjaJSONEncoder
 from ninja.security import APIKeyHeader
 from pydantic import BaseModel
 
-from .models import MeterReading, SolarReading
+from .models import Endpoint, MeterReading, SolarReading
 from .schemas import (
     AggregateBucket,
     BucketSize,
+    MeterEndpointOut,
     MeterReadingIn,
     MeterReadingOut,
     SolarReadingIn,
@@ -63,6 +64,10 @@ solar_router = Router(by_alias=True)
 
 @meter_router.post("/readings/", response=MeterReadingOut)
 def create_meter_reading(request, payload: MeterReadingIn):
+    Endpoint.objects.update_or_create(
+        id=payload.endpoint_id,
+        defaults={"endpoint_type": payload.endpoint_type},
+    )
     reading = MeterReading.objects.create(**payload.dict())
     return reading
 
@@ -94,13 +99,9 @@ def list_meter_readings(
     
 
 
-@meter_router.get("/endpoints/", response=list[int])
+@meter_router.get("/endpoints/", response=list[MeterEndpointOut])
 def list_meter_endpoints(request):
-    return list(
-        MeterReading.objects.values_list("endpoint_id", flat=True)
-        .distinct()
-        .order_by("endpoint_id")
-    )
+    return list(Endpoint.objects.order_by("id"))
 
 
 # ── Solar readings ─────────────────────────────────────────────────────────────

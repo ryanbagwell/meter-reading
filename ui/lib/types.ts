@@ -7,3 +7,8 @@ export interface MeterReading {
   consumption: number;
   tamper: number | null;
 }
+
+export interface MeterEndpoint {
+  id: number;
+  endpointType: string | null;
+}

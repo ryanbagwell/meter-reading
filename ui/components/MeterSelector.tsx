@@ -1,101 +1,54 @@
 'use client';
 
-import {
-  Box,
-  Button,
-  Checkbox,
-  Drawer,
-  Divider,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-} from '@mui/material';
+import { MenuItem, Select, type SelectChangeEvent } from '@mui/material';
 import { meterLabel } from '@/lib/commodity';
 
 interface MeterSelectorProps {
-  open: boolean;
-  onClose: () => void;
   endpoints: number[];
-  selected: number[];
+  selected: number | null;
   endpointTypeById: Record<number, string | null>;
-  onToggle: (id: number) => void;
-  onSelectAll: () => void;
-  onDeselectAll: () => void;
+  onChange: (id: number | null) => void;
 }
 
 export function MeterSelector({
-  open,
-  onClose,
   endpoints,
   selected,
   endpointTypeById,
-  onToggle,
-  onSelectAll,
-  onDeselectAll,
+  onChange,
 }: MeterSelectorProps) {
-  const allSelected = endpoints.length > 0 && selected.length === endpoints.length;
+  const value = selected === null ? '' : String(selected);
+
+  const handleChange = (event: SelectChangeEvent<string>) => {
+    const v = event.target.value;
+    onChange(v === '' ? null : Number(v));
+  };
 
   return (
-    <Drawer anchor="left" open={open} onClose={onClose}>
-      <Box sx={{ width: 280, display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            Meters
-          </Typography>
-          <Button size="small" onClick={onClose} sx={{ minWidth: 0 }}>
-            ✕
-          </Button>
-        </Box>
-
-        <Divider />
-
-        <Box sx={{ px: 2, py: 1 }}>
-          <Button
-            size="small"
-            onClick={allSelected ? onDeselectAll : onSelectAll}
-          >
-            {allSelected ? 'Deselect all' : 'Select all'}
-          </Button>
-        </Box>
-
-        <Divider />
-
-        <List dense sx={{ flex: 1, overflowY: 'auto' }}>
-          {endpoints.map((id) => {
-            const checked = selected.includes(id);
-            return (
-              <ListItem key={id} disablePadding>
-                <ListItemButton onClick={() => onToggle(id)}>
-                  <ListItemIcon sx={{ minWidth: 36 }}>
-                    <Checkbox
-                      edge="start"
-                      checked={checked}
-                      tabIndex={-1}
-                      disableRipple
-                      size="small"
-                    />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={meterLabel(id, endpointTypeById[id])}
-                    slotProps={{ primary: { variant: 'body2' } }}
-                  />
-                </ListItemButton>
-              </ListItem>
-            );
-          })}
-          {endpoints.length === 0 && (
-            <ListItem>
-              <ListItemText
-                primary="No meters found"
-                slotProps={{ primary: { variant: 'body2', color: 'text.secondary' } }}
-              />
-            </ListItem>
-          )}
-        </List>
-      </Box>
-    </Drawer>
+    <Select
+      size="small"
+      displayEmpty
+      value={value}
+      onChange={handleChange}
+      disabled={endpoints.length === 0}
+      renderValue={(v) =>
+        v === '' ? 'Select a meter' : meterLabel(Number(v), endpointTypeById[Number(v)])
+      }
+      sx={{ minWidth: 200, ml: 1 }}
+    >
+      {endpoints.length === 0 ? (
+        <MenuItem value="" disabled>
+          No meters found
+        </MenuItem>
+      ) : (
+        <MenuItem value="">
+          <em>None selected</em>
+        </MenuItem>
+      )}
+      {endpoints.map((id) => (
+        <MenuItem key={id} value={String(id)}>
+          {meterLabel(id, endpointTypeById[id])}
+        </MenuItem>
+      ))}
+    </Select>
   );
 }

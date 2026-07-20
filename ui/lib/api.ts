@@ -1,6 +1,6 @@
-import type { MeterReading } from './types';
+import type { MeterEndpoint, MeterReading } from './types';
 
-export async function fetchMeterEndpoints(): Promise<number[]> {
+export async function fetchMeterEndpoints(): Promise<MeterEndpoint[]> {
   const res = await fetch('/api/meter/endpoints/');
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
