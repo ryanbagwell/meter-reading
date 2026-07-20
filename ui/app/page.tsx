@@ -51,9 +51,9 @@ export default function Dashboard() {
     setError(null);
     Promise.all(
       selectedEndpoints.map((id) =>
-        fetchMeterReadings(preset.start, preset.end, 500, id).then(
+        fetchMeterReadings(preset.start, preset.end, 0, id).then(
           (readings) => [id, readings] as const,
-        ),
+        )
       ),
     )
       .then((pairs) => {

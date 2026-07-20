@@ -86,7 +86,12 @@ def list_meter_readings(
         qs = qs.filter(endpoint_id=meter_id)
     if protocol:
         qs = qs.filter(protocol=protocol)
-    return list(qs[offset : offset + limit])
+
+    if limit:
+        return list(qs[offset : offset + limit])
+    
+    return list(qs[offset:])
+    
 
 
 @meter_router.get("/endpoints/", response=list[int])

@@ -47,7 +47,7 @@ function MeterSummaryRow({ meterId, readings }: { meterId: number; readings: Met
         <Grid size={{ xs: 12, sm: 4 }}>
           <StatCard
             label="Change"
-            value={delta !== null ? `+${delta.toLocaleString()}` : '—'}
+            value={delta !== null ? `${delta.toLocaleString()}` : '—'}
           />
         </Grid>
       </Grid>

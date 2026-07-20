@@ -9,7 +9,7 @@ export async function fetchMeterEndpoints(): Promise<number[]> {
 export async function fetchMeterReadings(
   start: Date,
   end: Date,
-  limit = 500,
+  limit = 0,
   meterId?: number,
 ): Promise<MeterReading[]> {
   const params = new URLSearchParams({
