@@ -11,6 +11,8 @@ import { DateRangeControls } from '@/components/DateRangeControls';
 import { MeterSelector } from '@/components/MeterSelector';
 import type { RangePreset } from '@/components/DateRangeControls';
 
+const SELECTED_ENDPOINT_KEY = 'meter-reading:selectedEndpoint';
+
 function getDefaultPreset(): RangePreset {
   const now = new Date();
   return {
@@ -35,6 +37,12 @@ export default function Dashboard() {
       .then((data) => {
         setEndpoints(data.map((e) => e.id));
         setEndpointTypeById(Object.fromEntries(data.map((e) => [e.id, e.endpointType])));
+
+        const raw = localStorage.getItem(SELECTED_ENDPOINT_KEY);
+        const stored = raw !== null ? Number(raw) : null;
+        if (stored !== null && data.some((e) => e.id === stored)) {
+          setSelectedEndpoint(stored);
+        }
       })
       .catch((e: Error) => setError(e.message));
   }, []);
@@ -61,6 +69,9 @@ export default function Dashboard() {
 
   const handleSelect = useCallback((id: number | null) => {
     setSelectedEndpoint(id);
+    if (id !== null) {
+      localStorage.setItem(SELECTED_ENDPOINT_KEY, String(id));
+    }
   }, []);
 
   const currentEndpointType = selectedEndpoint !== null ? endpointTypeById[selectedEndpoint] ?? null : null;

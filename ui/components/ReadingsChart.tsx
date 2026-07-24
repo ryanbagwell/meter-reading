@@ -34,6 +34,49 @@ function buildChartData(readings: MeterReading[]): ChartRow[] {
   }));
 }
 
+function niceNumber(range: number, round: boolean): number {
+  const exponent = Math.floor(Math.log10(range));
+  const fraction = range / 10 ** exponent;
+  let niceFraction: number;
+  if (round) {
+    niceFraction = fraction < 1.5 ? 1 : fraction < 3 ? 2 : fraction < 7 ? 5 : 10;
+  } else {
+    niceFraction = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10;
+  }
+  return niceFraction * 10 ** exponent;
+}
+
+function computeNiceDomain(values: number[]): [number, number] {
+  let rawMin = Math.min(...values);
+  let rawMax = Math.max(...values);
+
+  if (rawMin === rawMax) {
+    if (rawMin === 0) return [0, 1];
+    const pad = Math.abs(rawMin) * 0.5;
+    rawMin -= pad;
+    rawMax += pad;
+  }
+
+  const span = rawMax - rawMin;
+  const padding = span * 0.08;
+  let paddedMin = rawMin - padding;
+  const paddedMax = rawMax + padding;
+
+  // Force a zero baseline when the raw min sits close to zero relative to the
+  // span (typical for register/consumption readings) — but not when values
+  // are large and clustered away from zero, where a zero floor would flatten
+  // the line visually.
+  if (rawMin >= 0 && rawMin <= span * 0.2) {
+    paddedMin = 0;
+  }
+
+  const niceStep = niceNumber((paddedMax - paddedMin) / 4, true);
+  const niceMin = paddedMin === 0 ? 0 : Math.floor(paddedMin / niceStep) * niceStep;
+  const niceMax = Math.ceil(paddedMax / niceStep) * niceStep;
+
+  return [niceMin, niceMax];
+}
+
 export function ReadingsChart({
   meterId,
   readings,
@@ -61,6 +104,9 @@ export function ReadingsChart({
 
   const data = buildChartData(readings);
   const isEmpty = data.length === 0;
+  const domain: [number, number] | undefined = isEmpty
+    ? undefined
+    : computeNiceDomain(data.map((d) => d.value));
 
   return (
     <Card variant="outlined">
@@ -86,6 +132,7 @@ export function ReadingsChart({
                 interval="preserveStartEnd"
               />
               <YAxis
+                domain={domain}
                 tick={{ fontSize: 11 }}
                 label={{
                   value: 'Register',
