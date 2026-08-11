@@ -10,7 +10,7 @@ server {
     }
 
     # Route /api/ requests directly to the Django/gunicorn backend.
-    location /api/ {
+    location ~ ^/(api|admin)/ {
         proxy_pass         http://127.0.0.1:9005;
         proxy_set_header   Host              $host;
         proxy_set_header   X-Real-IP         $remote_addr;
